@@ -1,0 +1,29 @@
+[project]
+name = "schwab_cli"
+version = "0.1.0"
+description = "Python scripts to provide CLI access to your Schwab (formerly TD Ameritrade) brokerage account"
+dependencies = [
+    "requests>=2.32.3",
+    "datetime>=5.5",
+    "python-dateutil>=2.9.0.post0",
+    "asyncio>=3.4.3",
+    "tzdata>=2024.1",
+    "tzlocal>=5.2",
+    "python-dotenv>=1.0.1",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/schwab_cli"]
