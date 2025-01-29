@@ -1,0 +1,4 @@
+/.env
+/auth.json
+/requirements.lock
+/requirements-dev.lock
