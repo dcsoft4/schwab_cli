@@ -18,7 +18,7 @@ from schwab_auth import (SchwabAuth)
 I am grateful for the following directions, upon which this script is based.
 
 Reddit - GetOutOfMyForest
-https://www.reddit.com/r/Schwab/comments/1bykadn/schwab_api_getting_a_token/
+https://www.reddit.com/r/Schwab/comments/1bykadn/comment/l4c3b56/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
 You receive an authorization code in the address line of your browser after putting in an address something like this in your browser:
 https://api.schwabapi.com/v1/oauth/authorize?client_id=xyzmy client idxyz&redirect_uri=https://127.0.0.1.
