@@ -17,7 +17,13 @@ A command-line playground for Python access to Schwab brokerage accounts.  Inclu
 
 ![Screenshot](schwab_cli_ss.png)
 
-The simplest command is "quote".  To get a quote on Apple, type
+### Commands
+
+#### Quote
+
+> quote [symbol1,symbol2,...]
+
+To get a quote on Apple, type
 
 > \> quote aapl
 > 
@@ -25,7 +31,32 @@ The simplest command is "quote".  To get a quote on Apple, type
 > {'symbol': 'AAPL', 'last': 229.499, 'ask': 229.55, 'bid': 229.47}
 
 
-TODO:  Write documentation on other commands and in-progress modules _orders.py_ and _transactions.py_
+#### Buying and Selling
+
+>[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>
+
+To buy 100 shares of Apple at the market price:
+> \> b aapl 100    
+
+To buy 100 shares of Apple at $213.50/share:
+> \> b aapl 100 213.50
+
+To buy 100 shares of Apple at the bidding (highest buying offer) price:
+> \> b aapl 100 bid    
+
+To sell 100 shares of Apple at the market price:
+> \> s aapl 100    
+
+To sell 100 shares of Apple at $213.50/share:
+> \> s aapl 100 213.50
+
+To sell 100 shares of Apple at the asking (lowest selling offer) price:
+> \> s aapl 100 ask    
+
+`bs` is "buy stop" <br>
+`ss` is "sell stop" <br>
+`ts` is "trailing stop"
+
 
 ## Token Access
 
