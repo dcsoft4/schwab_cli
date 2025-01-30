@@ -11,8 +11,8 @@ Here are several Python scripts to provide CLI access to your Schwab (formerly T
 A command-line playground for Python access to Schwab brokerage accounts.  Includes commands to:
 
 * Quote equities
-* Buy/sell equities (either on-demand or when specified price conditions occur)
 * View currently held positions
+* Buy/sell equities (either on-demand or when specified price conditions occur)
 * Summarize daily transactions 
 
 ![Screenshot](schwab_cli_ss.png)
@@ -21,42 +21,42 @@ A command-line playground for Python access to Schwab brokerage accounts.  Inclu
 
 #### Quote
 
-> quote [symbol1,symbol2,...]
+quote [symbol1,symbol2,...]
 
-To get a quote on Apple, type
-
-> \> quote aapl
-> 
->Refreshing access token...  
+> To get a quote on Apple, type <br>
+> \> quote aapl <br>
 > {'symbol': 'AAPL', 'last': 229.499, 'ask': 229.55, 'bid': 229.47}
 
 
+#### Position
+
+pos [symbol1,symbol2,...]
+
+> To see current position on Reddit, type<br>
+> \> pos rddt<br>
+RDDT: 30 @ 176.566666666667 (201.09); gain/loss: 735.70
+
 #### Buying and Selling
 
->[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>
+[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>
 
-To buy 100 shares of Apple at the market price:
-> \> b aapl 100    
-
-To buy 100 shares of Apple at $213.50/share:
-> \> b aapl 100 213.50
-
-To buy 100 shares of Apple at the bidding (highest buying offer) price:
-> \> b aapl 100 bid    
-
-To sell 100 shares of Apple at the market price:
-> \> s aapl 100    
-
-To sell 100 shares of Apple at $213.50/share:
-> \> s aapl 100 213.50
-
-To sell 100 shares of Apple at the asking (lowest selling offer) price:
-> \> s aapl 100 ask    
+> To buy 100 shares of Apple at the market price: <br>
+> \> b aapl 100 <br>
+> <br>
+> To buy 100 shares of Apple at $213.50/share: <br>
+> \> b aapl 100 213.50 <br>
+> <br>
+> To buy 100 shares of Apple at the bidding (highest buying offer) price: <br>
+> \> b aapl 100 bid <br>
+> <br>
+> To sell 100 shares of Apple at the asking (lowest selling offer) price: <br>
+> \> s aapl 100 ask <br>
 
 `bs` is "buy stop" <br>
 `ss` is "sell stop" <br>
 `ts` is "trailing stop"
 
+TODO:  Write more documentation on other commands and in-progress modules _orders.py_ and _transactions.py_
 
 ## Token Access
 
