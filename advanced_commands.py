@@ -10,7 +10,8 @@ from tzlocal import (get_localzone)
 import dotenv
 
 from schwab_auth import (SchwabAuth)
-from schwab_api import (get_my_account_number, get_account_balance, monitor_balance, place_order, get_quotes, get_account_positions,
+# from schwab_api import (get_my_account_number, get_account_balance, monitor_balance, place_order, get_quotes, get_account_positions,
+from schwab_api import (get_account_balance, monitor_balance, place_order, get_quotes, get_account_positions,
 get_transactions, get_orders, delete_order, delete_working_orders)
 from transactions import (find_transaction_groups, dump_transaction_groups)
 from orders import (find_working_orders, WorkingOrder)
@@ -28,8 +29,14 @@ EXTREME_EXPIRATION_SECONDS = 60 * 30  # 30 minutes
 _advanced_commands = [
     {
         "name": "buylow",
+        "prompt": "[buylow | sellhigh] [symbol] [num shares] [change<%>] <extreme> <limit>",
         "function": lambda parts, schwab_auth: _do_buylow(parts, schwab_auth),
-    }
+    },
+    {
+        "name": "sellhigh",
+        "prompt": "",     # buylow's prompt is used for sellhigh also
+        "function": lambda parts, schwab_auth: _do_sellhigh(parts, schwab_auth),
+    },
 ]
 
 
@@ -41,6 +48,17 @@ def exec_advanced_command(name: str, parts: list[str], schwab_auth: SchwabAuth) 
     return True
 
 
+def get_advanced_prompts() -> list[str]:
+    prompts = []
+    for cmd in _advanced_commands:
+        if cmd["prompt"]:
+            prompt = '\t' + cmd["prompt"]
+            prompts.append(prompt.expandtabs())
+    return prompts
+    # return [f"\t{cmd['prompt'].expandtabs()}" for cmd in _advanced_commands if cmd['prompt']]
+
+
+
 def _do_buylow(parts: list[str], schwab_auth: SchwabAuth):
     symbol = parts[1]
     numshares = int(parts[2])
@@ -49,6 +67,17 @@ def _do_buylow(parts: list[str], schwab_auth: SchwabAuth):
     limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
     try:
         _buylow_sellhigh(schwab_auth, True, symbol, numshares, change_or_percent_change, extreme, limit)
+    except Exception as e:
+        print(e)
+
+def _do_sellhigh(parts: list[str], schwab_auth: SchwabAuth):
+    symbol = parts[1]
+    numshares = int(parts[2])
+    change_or_percent_change: str = parts[3]  # good default is "0.025%"
+    extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
+    limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
+    try:
+        buylow_sellhigh(schwab_auth, False, symbol, numshares, change_or_percent_change, extreme, limit)
     except Exception as e:
         print(e)
 

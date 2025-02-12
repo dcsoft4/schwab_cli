@@ -200,5 +200,3 @@ def delete_working_orders(schwab_auth: SchwabAuth, symbol: str):
         resp: requests.Response = delete_order(schwab_auth, order.order_id)
         print(
             f"Deleting working order {order.order_id}:  {order.instruction} {order.symbol} {order.shares}... {"OK" if resp.ok else resp.text}")
-
-

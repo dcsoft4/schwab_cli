@@ -12,9 +12,9 @@ import dotenv
 from schwab_auth import (SchwabAuth)
 from transactions import (find_transaction_groups, dump_transaction_groups)
 from orders import (find_working_orders, WorkingOrder)
-from schwab_api import (get_my_account_number, get_account_balance, monitor_balance, place_order, get_quotes, get_account_positions,
+from schwab_api import (get_account_balance, monitor_balance, place_order, get_quotes, get_account_positions,
 get_transactions, get_orders, delete_order, delete_working_orders)
-from advanced_commands import (exec_advanced_command)
+from advanced_commands import (get_advanced_prompts, exec_advanced_command)
 
 # Status:  Production
 
@@ -242,17 +242,6 @@ def process_line(line: str, schwab_auth: SchwabAuth):
         return
     elif exec_advanced_command(cmd, parts, schwab_auth):
         return
-    elif cmd == "sellhigh":
-        symbol = parts[1]
-        numshares = int(parts[2])
-        change_or_percent_change: str = parts[3]  # good default is "0.025%"
-        extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
-        limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
-        try:
-            buylow_sellhigh(schwab_auth, False, symbol, numshares, change_or_percent_change, extreme, limit)
-        except Exception as e:
-            print(e)
-        return
     elif cmd == "breakout":
         symbol = parts[1]
         numshares = int(parts[2])
@@ -342,7 +331,7 @@ def repl(initial_line, schwab_auth: SchwabAuth):
             "\tquote [symbol1,symbol2,...]\n"
             "\tpos [symbol1,symbol2,...]\n"
             "\tposloop [symbol1,symbol2,...]\n"
-            # "\t[buylow | sellhigh] [symbol] [num shares] [change<%>] <extreme> <limit>\n"
+            get_advanced_prompts()
             # "\t[breakout | oscillate] [symbol] [num shares] [low price] [high price]\n"
             # "\ttrend [symbol] <ref price>\n"
             # "\tport<folio>\n"
