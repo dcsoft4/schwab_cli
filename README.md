@@ -8,6 +8,8 @@ Here are several Python scripts to provide CLI access to your Schwab (formerly T
 
 [_schwab_cli.py_]
 
+**Status:  Production** for documented commands below, **Experimental** for undocumented commands
+
 A command-line playground for Python access to Schwab brokerage accounts.  Includes commands to:
 
 * Quote equities
@@ -56,9 +58,14 @@ RDDT: 30 @ 176.566666666667 (201.09); gain/loss: 735.70
 `ss` is "sell stop" <br>
 `ts` is "trailing stop"
 
-TODO:  Write more documentation on other commands and in-progress modules _orders.py_ and _transactions.py_
+#### Support Modules
+[_schwab_orders.py_]<br>
+[_schwab_transactions.py_]
+
+
 
 ## Token Access
+**Status:  Production**
 
 [_schwab_auth.py_]
 
@@ -68,6 +75,7 @@ The current token state is saved in _auth.json_.
 
 
 ## Refresh Token Generation
+**Status:  Production**
 
 [_gen_refresh_token.py_]
 
