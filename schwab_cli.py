@@ -199,18 +199,7 @@ def process_line(line: str, schwab_auth: SchwabAuth):
         return
 
     cmd = parts[0]
-    if cmd == "bal":
-        if len(parts) > 1:
-            bal_cmd = parts[1]
-            if bal_cmd == "mon":
-                monitor_balance(schwab_auth)
-            else:
-                print(f"Invalid bal parameter: {bal_cmd}")
-        else:
-            account_balance: float = get_account_balance(schwab_auth)
-            print(f"Account balance: ${account_balance:,}")
-        return
-    elif cmd.startswith("port"):
+    if cmd.startswith("port"):
         resp: requests.Response = get_account_positions(schwab_auth)
         if resp.ok:
             account_positions = json.loads(resp.text)
@@ -325,18 +314,19 @@ def repl(initial_line, schwab_auth: SchwabAuth):
 
     while True:
         print()
-        print("Enter a command (or 'q' to quit):")
-        line = input(
-            "\t[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>\n"
-            "\tquote [symbol1,symbol2,...]\n"
-            "\tpos [symbol1,symbol2,...]\n"
-            "\tposloop [symbol1,symbol2,...]\n"
-            get_advanced_prompts()
-            # "\t[breakout | oscillate] [symbol] [num shares] [low price] [high price]\n"
-            # "\ttrend [symbol] <ref price>\n"
-            # "\tport<folio>\n"
-            # "\ttrans<actions> [symbol1,symbol2,...] <days ago>\n"
-            "> ")
+        print("Enter a command (or 'q' to quit):\n")
+        prompt = "[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>\n" \
+            "quote [symbol1,symbol2,...]\n" \
+            "pos [symbol1,symbol2,...]\n" \
+            "posloop [symbol1,symbol2,...]\n" \
+            "port<folio>\n"
+        for advanced_prompt in get_advanced_prompts():
+            prompt += f"{advanced_prompt}\n"
+        # prompt += "> "
+        # "\t[breakout | oscillate] [symbol] [num shares] [low price] [high price]\n"
+        # "\ttrend [symbol] <ref price>\n"
+        # "\ttrans<actions> [symbol1,symbol2,...] <days ago>\n"
+        line = input(prompt)
         process_line(line, schwab_auth)
 
 

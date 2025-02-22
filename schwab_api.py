@@ -47,11 +47,6 @@ def monitor_balance(schwab_auth: SchwabAuth):
         account_balance: float = get_account_balance(schwab_auth)
         now = datetime.now()
         print(f'{now.strftime("%X")}: ${account_balance:,}')
-        if account_balance < 13560:
-            print(f"BELOW $13560; sell if below $13550")
-        elif account_balance > 13570:
-            print(f"ABOVE $13570; sell if above $13580")
-
         time.sleep(30)
 
 

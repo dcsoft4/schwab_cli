@@ -25,8 +25,25 @@ NO_LIMIT = -1
 EXTREME_EXPIRATION_SECONDS = 60 * 30  # 30 minutes
 
 
-
 _advanced_commands = [
+    {
+        "name": "bal",
+        "prompt": "bal [mon]",
+        "help": "Show account balance",
+        "function": lambda parts, schwab_auth: _do_bal(parts, schwab_auth),
+    },
+    {
+        "name": "flatten",
+        "prompt": "flatten",
+        "help": "Sell all open positions",
+        "function": lambda parts, schwab_auth: _do_flatten(parts, schwab_auth),
+    },
+    {
+        "name": "flattenedport",
+        "prompt": "flattenedport",
+        "help": "Show simulated portfolio",
+        "function": lambda parts, schwab_auth: _do_flattened_port(parts, schwab_auth),
+    },
     {
         "name": "buylow",
         "prompt": "[buylow | sellhigh] [symbol] [num shares] [change<%>] <extreme> <limit>",
@@ -52,8 +69,7 @@ def get_advanced_prompts() -> list[str]:
     prompts = []
     for cmd in _advanced_commands:
         if cmd["prompt"]:
-            prompt = '\t' + cmd["prompt"]
-            prompts.append(prompt.expandtabs())
+            prompts.append(cmd["prompt"])
     return prompts
     # return [f"\t{cmd['prompt'].expandtabs()}" for cmd in _advanced_commands if cmd['prompt']]
 
@@ -77,7 +93,7 @@ def _do_sellhigh(parts: list[str], schwab_auth: SchwabAuth):
     extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
     limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
     try:
-        buylow_sellhigh(schwab_auth, False, symbol, numshares, change_or_percent_change, extreme, limit)
+        _buylow_sellhigh(schwab_auth, False, symbol, numshares, change_or_percent_change, extreme, limit)
     except Exception as e:
         print(e)
 
@@ -284,3 +300,94 @@ def _buylow_sellhigh(schwab_auth, islow: bool, symbol: str, numshares: int, chan
 
         print_count += 1
         time.sleep(1)
+
+
+def _do_bal(parts: list[str], schwab_auth: SchwabAuth):
+    if len(parts) > 1:
+        bal_cmd = parts[1]
+        if bal_cmd == "mon":
+            monitor_balance(schwab_auth)
+        else:
+            print(f"Invalid bal parameter: {bal_cmd}")
+    else:
+        account_balance: float = get_account_balance(schwab_auth)
+        print(f"Account balance: ${account_balance:,}")
+
+
+def _do_flatten(parts: list[str], schwab_auth: SchwabAuth):
+    resp: requests.Response = get_account_positions(schwab_auth)
+    if not resp.ok:
+        print(f"Error getting positions")
+        return
+
+    account_positions = json.loads(resp.text)
+    positions: list = account_positions[0]["securitiesAccount"]["positions"]
+    for p in positions:
+        symbol = p["instrument"]["symbol"]
+        quantity: int = int(p["longQuantity"]) - int(p["shortQuantity"])
+        instruction = 's' if quantity > 0 else 'b'
+        quantity = abs(quantity)
+        resp: requests.Response = place_order(schwab_auth, instruction, symbol, quantity)
+        if not resp.ok:
+            print(f"Error disposing of {symbol}: {quantity} shares: instruction is {instruction}")
+
+
+def _do_flattened_port(parts: list[str], schwab_auth: SchwabAuth):
+    portfolio = {
+        "TJX": 1,
+        "RDDT": 10,
+        "NVDA": 5,
+        "IBIT": 10,
+        "NFLX": 2,
+        "AAPL": 10,
+        "TTD": 15,
+    }
+
+    flattened_portfolio = {
+        "TJX": (1, 124.14),
+        "RDDT": (10, 200.172),
+        "NVDA": (5, 138.44),
+        "IBIT": (10, 55.74),
+        "NFLX": (2, 1059.065),
+        "AAPL": (10, 244.15),
+        "TTD": (15, 80.76),
+    }
+
+
+    symbols = ",".join(portfolio.keys())
+    quotes = get_quotes(symbols, schwab_auth)
+    if not quotes:
+        print("Error getting quotes")
+        return
+    total_net = 0.0
+    total_flattened_net = 0.0
+    for symbol, quantity in portfolio.items():
+        price = quotes[symbol]["quote"]["lastPrice"]
+        flattened_price = flattened_portfolio[symbol][1]
+        net = quantity * price
+        flattened_net = quantity * flattened_price
+        total_net += net
+        total_flattened_net += flattened_net
+        print(f"{symbol}: {quantity} @ {flattened_price:,.2f} (Current: {price:,.2f}) = {(flattened_net - net):,.2f}")
+    print("----")
+    print(f"Net value of equities: {total_flattened_net:,.2f} (Current: {total_net:,.2f}) = {(total_flattened_net - total_net):,.2f}")
+
+
+'''
+    resp: requests.Response = get_account_positions(schwab_auth)
+    account_positions = json.loads(resp.text)
+    cash = account_positions[0]["securitiesAccount"]["initialBalances"]["cashBalance"]
+    print("----")
+    print(f"Cash in account: ${cash:,.2f}")
+    total_net += cash
+
+    print("----")
+    print(f"Net value of simulated portfolio: {total_net:,.2f}")
+
+    resp: requests.Response = get_account_positions(schwab_auth)
+    if not resp.ok:
+        print(f"Error getting positions")
+        return
+'''
+
+
