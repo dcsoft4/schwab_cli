@@ -9,7 +9,6 @@ from tzlocal import (get_localzone)
 from orders import (find_working_orders, WorkingOrder)
 from schwab_auth import (SchwabAuth)
 
-# Status:  Production
 
 TRADER_API_ROOT = "https://api.schwabapi.com/trader/v1"
 MARKETDATA_API_ROOT = "https://api.schwabapi.com/marketdata/v1"

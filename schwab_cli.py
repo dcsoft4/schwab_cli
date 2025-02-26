@@ -29,15 +29,16 @@ def repl(initial_line, schwab_auth: SchwabAuth):
     if initial_line:
         process_line(initial_line, schwab_auth)
 
+    usage_prompt = ""
+    for advanced_prompt in get_command_prompts():
+        usage_prompt += f"{advanced_prompt}\n"
     while True:
         print()
-        print("Enter a command (or 'q' to quit):\n")
-        prompt = ""
-        for advanced_prompt in get_command_prompts():
-            prompt += f"{advanced_prompt}\n"
-        prompt += "> "
-        line = input(prompt)
-        process_line(line, schwab_auth)
+        line = input("Enter a command (leave blank for usage) then press Return> ")
+        if line:
+            process_line(line, schwab_auth)
+        else:
+            print(usage_prompt)
 
 
 def main(schwab_auth: SchwabAuth):

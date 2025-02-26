@@ -12,9 +12,6 @@ from schwab_api import (get_account_balance, monitor_balance, place_order, get_q
 from schwab_auth import (SchwabAuth)
 from transactions import (find_transaction_groups, dump_transaction_groups)
 
-# Status:  Experimental
-
-
 
 NO_EXTREME = -1
 NO_LIMIT = -1
@@ -112,7 +109,7 @@ _advanced_commands = [
     },
     {
         "name": "q",
-        "prompt": "q",
+        "prompt": "q (quit)",
         "help": "Quit the program",
         "function": lambda parts, schwab_auth: sys.exit(0)
     },

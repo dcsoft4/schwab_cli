@@ -13,7 +13,6 @@ from schwab_auth import (SchwabAuth)
 
 # Status:  Production
 
-
 """
 I am grateful for the following directions, upon which this script is based.
 

@@ -8,7 +8,6 @@ import dotenv
 import requests
 from dateutil import parser
 
-# Status:  Production
 
 
 api_root = "https://api.schwabapi.com/v1"
