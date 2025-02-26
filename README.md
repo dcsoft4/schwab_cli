@@ -40,20 +40,22 @@ RDDT: 30 @ 176.566666666667 (201.09); gain/loss: 735.70
 
 #### Buying and Selling
 
-[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>
+order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>
 
 > To buy 100 shares of Apple at the market price: <br>
-> \> b aapl 100 <br>
+> \> order b aapl 100 <br>
 > <br>
 > To buy 100 shares of Apple at $213.50/share: <br>
-> \> b aapl 100 213.50 <br>
+> \> order b aapl 100 213.50 <br>
 > <br>
 > To buy 100 shares of Apple at the bidding (highest buying offer) price: <br>
-> \> b aapl 100 bid <br>
+> \> order b aapl 100 bid <br>
 > <br>
 > To sell 100 shares of Apple at the asking (lowest selling offer) price: <br>
-> \> s aapl 100 ask <br>
+> \> order s aapl 100 ask <br>
 
+`b` is "buy" <br>
+`s` is "sell" <br>
 `bs` is "buy stop" <br>
 `ss` is "sell stop" <br>
 `ts` is "trailing stop"
