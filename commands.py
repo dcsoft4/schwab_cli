@@ -41,6 +41,12 @@ _advanced_commands = [
         "function": lambda parts, schwab_auth: _do_quote(parts, schwab_auth)
     },
     {
+        "name": "order",
+        "prompt": "order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset (for 'ts') | 'ask' | 'bid'>",
+        "help": "Place an order to buy/sell/buy stop/sell stop/trailing stop",
+        "function": lambda parts, schwab_auth: do_order(parts, schwab_auth),
+},
+    {
         "name": "breakout",
         "prompt": "[breakout | oscillate] [symbol] [shares] [low] [high]",
         "help": "Enter breakout trade",
@@ -79,7 +85,7 @@ _advanced_commands = [
     {
         "name": "trans",
         "prompt": "trans [symbol1,symbol2,...] <days ago>",
-        "help": "Show transactions for symbols",
+        "help": "Show transactions for symbols [Experimental]",
         "function": lambda parts, schwab_auth: _do_trans(parts, schwab_auth)
     },
     {
@@ -113,15 +119,15 @@ _advanced_commands = [
 ]
 
 
-def exec_advanced_command(name: str, parts: list[str], schwab_auth: SchwabAuth) -> bool:
+def exec_command(name: str, parts: list[str], schwab_auth: SchwabAuth):
     cmd: dict = next((command for command in _advanced_commands if command["name"] == name), None)
     if not cmd:
-        return False
+        print(f"Error:  Invalid command: {name}")
+        return
     cmd["function"](parts, schwab_auth)
-    return True
 
 
-def get_advanced_prompts() -> list[str]:
+def get_command_prompts() -> list[str]:
     prompts = []
     for cmd in _advanced_commands:
         if cmd["prompt"]:
@@ -168,6 +174,28 @@ def _do_quote(parts: list[str], schwab_auth: SchwabAuth):
                     prices.append({"symbol": symbol, "last": quote["lastPrice"], "ask": quote["askPrice"],
                                    "bid": quote["bidPrice"]})
             print(*prices, sep='\n')
+
+def do_order(parts: list[str], schwab_auth: SchwabAuth):
+    if len(parts) < 1:
+        print(f"Error:  Invalid order --- order start with one of: 'b' (buy), 's' (sell), 'bs' (buy stop), 'ss' (sell stop), 'ts' (trail stop))")
+        return
+
+    instruction = parts[1]
+    if instruction not in ('b', 's', 'bs', 'ss', 'ts'):
+        print(f"Error:  Invalid order --- instruction must be one of 'b', 's', 'bs', 'ss', 'ts'")
+        return
+
+    if len(parts) < 3:
+        print(f"Error:  Invalid order --- order must contain symbol and number of shares")
+        return
+
+    symbol = parts[2]
+    shares = int(parts[3])
+    limit_price = parts[4] if len(parts) > 3 else None
+    resp: requests.Response = place_order(schwab_auth, instruction, symbol, shares, limit_price)
+    result: str = resp.text if resp.text else "OK" if resp.ok else "Something went wrong"
+    print(result)
+    return
 
 def _do_breakout(parts: list[str], schwab_auth: SchwabAuth):
     try:

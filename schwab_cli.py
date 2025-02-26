@@ -1,34 +1,15 @@
 import locale
 import os
 import sys
-import time
 from datetime import (datetime)
 
 import dotenv
-import requests
 
-from advanced_commands import (get_advanced_prompts, exec_advanced_command)
-from schwab_api import (place_order, get_quotes)
+from commands import (get_command_prompts, exec_command)
 from schwab_auth import (SchwabAuth)
 
 
 # Status:  Production
-
-def wait_then(schwab_auth, symbol: str, conditional_code: str, action_cmd: str, print_code: str):
-    while True:
-        q: dict|None = get_quotes(f'{symbol}', schwab_auth)[f'{symbol}']['quote']
-        if not q:
-            print("Error getting quote, retrying...")
-        else:
-            last = q['lastPrice']
-            bid = q['bidPrice']
-            ask = q['askPrice']
-            exec(print_code, globals(), {'last': last, 'bid': bid, 'ask': ask})
-            if eval(conditional_code):
-                process_line(action_cmd, schwab_auth)
-                break
-        time.sleep(1)
-
 
 
 def process_line(line: str, schwab_auth: SchwabAuth):
@@ -37,26 +18,9 @@ def process_line(line: str, schwab_auth: SchwabAuth):
     if len(parts) < 1:
         return
 
-    cmd = parts[0]
-
     # Try executing as an advanced command first
-    if exec_advanced_command(cmd, parts, schwab_auth):
-        return
-
-    # If not an advanced command, treat as order instruction
-    if len(parts) < 3:
-        print(f"Enter at least 3 parts in line: {line}")
-        return
-
-    # TODO:  make a command -- must hardcode "b", "s", instructions, not accepting shortcuts like "buy" and "sell"
-    instruction = parts[0]
-    symbol = parts[1]
-    shares = int(parts[2])
-    limit_price = parts[3] if len(parts) > 3 else None
-    resp: requests.Response = place_order(schwab_auth, instruction, symbol, shares, limit_price)
-    result: str = resp.text if resp.text else "OK" if resp.ok else "Something went wrong"
-    print(result)
-    return
+    cmd = parts[0]
+    exec_command(cmd, parts, schwab_auth)
 
 
 def repl(initial_line, schwab_auth: SchwabAuth):
@@ -68,10 +32,10 @@ def repl(initial_line, schwab_auth: SchwabAuth):
     while True:
         print()
         print("Enter a command (or 'q' to quit):\n")
-        prompt = "[b<uy> | s<ell> | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>\n"     # TODO make a command
-        for advanced_prompt in get_advanced_prompts():
+        prompt = ""
+        for advanced_prompt in get_command_prompts():
             prompt += f"{advanced_prompt}\n"
-        # prompt += "> "
+        prompt += "> "
         line = input(prompt)
         process_line(line, schwab_auth)
 

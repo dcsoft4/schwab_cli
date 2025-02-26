@@ -60,7 +60,10 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
         'ss' - sell stop
         'ts' - trailing stop
 
-    limit_or_offset_or_bid_or_ask is a float, or can be a string ('bid' or 'ask'), or None
+    limit_or_offset_or_bid_or_ask is:
+        a float -- the limit price, unless instruction is 'ts', then it is the offset,
+        a string -- 'bid' or 'ask',
+        None -- Market order
     """
 
     symbol = symbol.upper()
@@ -72,10 +75,10 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
         quotes: dict = get_quotes(symbol, schwab_auth)
         q = quotes[symbol]['quote']
         limit_or_offset = q['bidPrice'] if limit_or_offset_or_bid_or_ask == 'bid' else q['askPrice']
+    elif limit_or_offset_or_bid_or_ask is float:
+        limit_or_offset = float(limit_or_offset_or_bid_or_ask)
     else:
-        limit_or_offset = limit_or_offset_or_bid_or_ask
-    if limit_or_offset:
-        limit_or_offset = float(limit_or_offset)
+        limit_or_offset = None
 
     order_type = "TRAILING_STOP" if instruction == "ts" else \
         "STOP" if instruction == 'ss' or instruction == 'bs' else \
