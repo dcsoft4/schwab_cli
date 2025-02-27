@@ -188,7 +188,7 @@ def do_order(parts: list[str], schwab_auth: SchwabAuth):
 
     symbol = parts[2]
     shares = int(parts[3])
-    limit_price = parts[4] if len(parts) > 3 else None
+    limit_price = parts[4] if len(parts) > 4 else None
     resp: requests.Response = place_order(schwab_auth, instruction, symbol, shares, limit_price)
     result: str = resp.text if resp.text else "OK" if resp.ok else "Something went wrong"
     print(result)

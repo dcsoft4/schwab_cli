@@ -74,7 +74,7 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
         quotes: dict = get_quotes(symbol, schwab_auth)
         q = quotes[symbol]['quote']
         limit_or_offset = q['bidPrice'] if limit_or_offset_or_bid_or_ask == 'bid' else q['askPrice']
-    elif limit_or_offset_or_bid_or_ask is float:
+    elif limit_or_offset_or_bid_or_ask:
         limit_or_offset = float(limit_or_offset_or_bid_or_ask)
     else:
         limit_or_offset = None
