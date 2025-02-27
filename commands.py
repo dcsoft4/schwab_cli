@@ -20,21 +20,9 @@ EXTREME_EXPIRATION_SECONDS = 60 * 30  # 30 minutes
 
 _advanced_commands = [
     {
-        "name": "bal",
-        "prompt": "bal [mon]",
-        "help": "Show account balance",
-        "function": lambda parts, schwab_auth: _do_bal(parts, schwab_auth),
-    },
-    {
-        "name": "port",
-        "prompt": "port",
-        "help": "Show portfolio positions",
-        "function": lambda parts, schwab_auth: _do_port(parts, schwab_auth)
-    },
-    {
         "name": "quote",
         "prompt": "quote [symbol1,symbol2,...]",
-        "help": "Get quotes for symbols",
+        "help": "Get quotes (current prices) for symbols",
         "function": lambda parts, schwab_auth: _do_quote(parts, schwab_auth)
     },
     {
@@ -42,30 +30,12 @@ _advanced_commands = [
         "prompt": "order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset (for 'ts') | 'ask' | 'bid'>",
         "help": "Place an order to buy/sell/buy stop/sell stop/trailing stop",
         "function": lambda parts, schwab_auth: do_order(parts, schwab_auth),
-},
-    {
-        "name": "breakout",
-        "prompt": "[breakout | oscillate] [symbol] [shares] [low] [high]",
-        "help": "Enter breakout trade",
-        "function": lambda parts, schwab_auth: _do_breakout(parts, schwab_auth)
     },
     {
-        "name": "oscillate",
-        "prompt": "",  # breakout's prompt is used for oscillate also
-        "help": "Enter oscillate trade",
-        "function": lambda parts, schwab_auth: _do_oscillate(parts, schwab_auth)
-    },
-    {
-        "name": "trend",
-        "prompt": "trend <symbol> [ref_price]",
-        "help": "Compute trend for symbol",
-        "function": lambda parts, schwab_auth: _do_trend(parts, schwab_auth)
-    },
-    {
-        "name": "code",
-        "prompt": "code <filename>",
-        "help": "Execute code from file",
-        "function": lambda parts, schwab_auth: _do_code(parts, schwab_auth)
+        "name": "bal",
+        "prompt": "bal [mon]",
+        "help": "Show account balance",
+        "function": lambda parts, schwab_auth: _do_bal(parts, schwab_auth),
     },
     {
         "name": "pos",
@@ -80,14 +50,15 @@ _advanced_commands = [
         "function": lambda parts, schwab_auth: _do_posloop(parts, schwab_auth)
     },
     {
-        "name": "trans",
-        "prompt": "trans [symbol1,symbol2,...] <days ago>",
-        "help": "Show transactions for symbols [Experimental]",
-        "function": lambda parts, schwab_auth: _do_trans(parts, schwab_auth)
+        "name": "trend",
+        "prompt": "trend [symbol] <ref_price>",
+        "help": "Show trend of symbol's price every 30 seconds, displaying current price relative to the reference price",
+        "function": lambda parts, schwab_auth: _do_trend(parts, schwab_auth)
     },
     {
         "name": "buylow",
         "prompt": "[buylow | sellhigh] [symbol] [num shares] [change<%>] <extreme> <limit>",
+        "help": "Emulate a trailing stop but use for entering a position",
         "function": lambda parts, schwab_auth: _do_buylow(parts, schwab_auth),
     },
     {
@@ -96,16 +67,39 @@ _advanced_commands = [
         "function": lambda parts, schwab_auth: _do_sellhigh(parts, schwab_auth),
     },
     {
+        "name": "breakout",
+        "prompt": "[breakout | oscillate] [symbol] [shares] [low] [high] <-- EXPERIMENTAL",
+        "help": "Enter position when stock price breaks out of, or oscillates within, low/high range",
+        "function": lambda parts, schwab_auth: _do_breakout(parts, schwab_auth)
+    },
+    {
+        "name": "oscillate",
+        "prompt": "",  # breakout's prompt is used for oscillate also
+        "function": lambda parts, schwab_auth: _do_oscillate(parts, schwab_auth)
+    },
+    {
+        "name": "trans",
+        "prompt": "trans [symbol1,symbol2,...] <days ago> <-- EXPERIMENTAL",
+        "help": "Show transactions from last <days ago> for specified symbols",
+        "function": lambda parts, schwab_auth: _do_trans(parts, schwab_auth)
+    },
+    {
         "name": "flatten",
-        "prompt": "flatten",
-        "help": "Sell all open positions",
+        "prompt": "flatten <-- EXPERIMENTAL",
+        "help": "Cover all open positions by buying or selling them at the current price, as appropriate",
         "function": lambda parts, schwab_auth: _do_flatten(parts, schwab_auth),
     },
     {
-        "name": "flattenedport",
-        "prompt": "flattenedport",
-        "help": "Show simulated portfolio",
-        "function": lambda parts, schwab_auth: _do_flattened_port(parts, schwab_auth),
+        "name": "code",
+        "prompt": "code <filename> <-- EXPERIMENTAL",
+        "help": "Execute code from file.  The code has access to all of this program's Python functions.",
+        "function": lambda parts, schwab_auth: _do_code(parts, schwab_auth)
+    },
+    {
+        "name": "refport",
+        "prompt": "refport <-- EXPERIMENTAL",
+        "help": "Show current value of a (previously hard-coded) reference portfolio.",
+        "function": lambda parts, schwab_auth: _do_reference_port(parts, schwab_auth),
     },
     {
         "name": "q",
@@ -116,12 +110,22 @@ _advanced_commands = [
 ]
 
 
-def exec_command(name: str, parts: list[str], schwab_auth: SchwabAuth):
-    cmd: dict = next((command for command in _advanced_commands if command["name"] == name), None)
+def show_help():
+    for command in _advanced_commands:
+        help = command.get('help')
+        if help:
+            print(f"{command['prompt']}: {command['help']}")
+
+def exec_command(cmd_name: str, parts: list[str], schwab_auth: SchwabAuth):
+    cmd: dict = next((command for command in _advanced_commands if command["name"] == cmd_name), None)
     if not cmd:
-        print(f"Error:  Invalid command: {name}")
+        print(f"Error:  Invalid command: {cmd_name}")
         return
     cmd["function"](parts, schwab_auth)
+
+def get_command_prompt(cmd_name: str = None) -> str|None:
+    cmd: dict = next((command for command in _advanced_commands if command["name"] == cmd_name), None)
+    return cmd["prompt"] if cmd else None
 
 
 def get_command_prompts() -> list[str]:
@@ -131,31 +135,6 @@ def get_command_prompts() -> list[str]:
             prompts.append(cmd["prompt"])
     return prompts  # [f"\t{cmd['prompt'].expandtabs()}" for cmd in _advanced_commands if cmd['prompt']]
 
-
-def _do_bal(parts: list[str], schwab_auth: SchwabAuth):
-    if len(parts) > 1:
-        bal_cmd = parts[1]
-        if bal_cmd == "mon":
-            monitor_balance(schwab_auth)
-        else:
-            print(f"Invalid bal parameter: {bal_cmd}")
-    else:
-        account_balance: float = get_account_balance(schwab_auth)
-        print(f"Account balance: ${account_balance:,}")
-
-def _do_port(parts: list[str], schwab_auth: SchwabAuth):
-    resp: requests.Response = get_account_positions(schwab_auth)
-    if resp.ok:
-        account_positions = json.loads(resp.text)
-        positions: list = account_positions[0]["securitiesAccount"]["positions"]
-        daily_profits_by_position: list = [{"symbol": p["instrument"]["symbol"], "quantity": p["longQuantity"],
-                                         "todayPct": p["currentDayProfitLossPercentage"],
-                                         "today": p.get("pl_day")} for p in positions if
-                                        p["longQuantity"] >= 1]
-        print(*daily_profits_by_position, sep='\n')
-    else:
-        result: str = resp.text if resp.text else "OK" if resp.ok else "Something went wrong"
-        print(result)
 
 def _do_quote(parts: list[str], schwab_auth: SchwabAuth):
     symbols: str = ' '.join(parts[1:]).strip()
@@ -194,28 +173,34 @@ def do_order(parts: list[str], schwab_auth: SchwabAuth):
     print(result)
     return
 
-def _do_breakout(parts: list[str], schwab_auth: SchwabAuth):
-    try:
-        symbol = parts[1]
-        numshares = int(parts[2])
-        low_target = float(parts[3])
-        high_target = float(parts[4])
-        enter_position(schwab_auth, symbol, numshares, low_target, high_target, breakout=True)
-    except Exception as e:
-        print(e)
+def _do_bal(parts: list[str], schwab_auth: SchwabAuth):
+    if len(parts) > 1:
+        bal_cmd = parts[1]
+        if bal_cmd == "mon":
+            monitor_balance(schwab_auth)
+        else:
+            print(f"Invalid bal parameter: {bal_cmd}")
+    else:
+        account_balance: float = get_account_balance(schwab_auth)
+        print(f"Account balance: ${account_balance:,}")
 
-def _do_oscillate(parts: list[str], schwab_auth: SchwabAuth):
-    try:
-        symbol = parts[1]
-        numshares = int(parts[2])
-        low_target = float(parts[3])
-        high_target = float(parts[4])
-        enter_position(schwab_auth, symbol, numshares, low_target, high_target, breakout=False)
-    except Exception as e:
-        print(e)
+def _do_pos(parts: list[str], schwab_auth: SchwabAuth):
+    symbols_str: str = ' '.join(parts[1:]).strip().upper()
+    show_pos(symbols_str, schwab_auth)
+
+def _do_posloop(parts: list[str], schwab_auth: SchwabAuth):
+    symbols_str: str = ' '.join(parts[1:]).strip().upper()
+    while True:
+        try:
+            now = datetime.now()
+            print(f"{now.hour:02}:{now.minute:02}:{now.second:02}")
+            show_pos(symbols_str, schwab_auth)
+            time.sleep(30)
+        except KeyboardInterrupt:
+            break
 
 def _do_trend(parts: list[str], schwab_auth: SchwabAuth):
-    """Computes the trend of a single symbol"""
+    """Computes the trend of a single symbol compared to a reference price in units of 0.01%"""
     symbol = parts[1]
     ref_price = float(parts[2]) if len(parts) > 2 else None
     symbol = symbol.upper()
@@ -250,34 +235,47 @@ def _do_trend(parts: list[str], schwab_auth: SchwabAuth):
             break
     print(f"{now.hour:02}:{now.minute:02}:{now.second:02}:  {symbol} Final summary: {accum:.2f}")
 
-def _do_code(parts: list[str], schwab_auth: SchwabAuth):
-    filename: str = ' '.join(parts[1:]).strip()
+def _do_buylow(parts: list[str], schwab_auth: SchwabAuth):
+    symbol = parts[1]
+    numshares = int(parts[2])
+    change_or_percent_change: str = parts[3]  # good default is "0.025%"
+    extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
+    limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
     try:
-        with open(filename, 'rt') as f:
-            code_str: str = f.read()
-            print(f"Executing code: {code_str}")
-            exec(code_str, globals(), {})
-    except FileNotFoundError:
-        print(f"Error: The file '{filename}' was not found.")
-    except IOError:
-        print(f"Error: There was an issue reading the file '{filename}'.")
+        _buylow_sellhigh(schwab_auth, True, symbol, numshares, change_or_percent_change, extreme, limit)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(e)
 
-def _do_pos(parts: list[str], schwab_auth: SchwabAuth):
-    symbols_str: str = ' '.join(parts[1:]).strip().upper()
-    show_pos(symbols_str, schwab_auth)
+def _do_sellhigh(parts: list[str], schwab_auth: SchwabAuth):
+    symbol = parts[1]
+    numshares = int(parts[2])
+    change_or_percent_change: str = parts[3]  # good default is "0.025%"
+    extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
+    limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
+    try:
+        _buylow_sellhigh(schwab_auth, False, symbol, numshares, change_or_percent_change, extreme, limit)
+    except Exception as e:
+        print(e)
 
-def _do_posloop(parts: list[str], schwab_auth: SchwabAuth):
-    symbols_str: str = ' '.join(parts[1:]).strip().upper()
-    while True:
-        try:
-            now = datetime.now()
-            print(f"{now.hour:02}:{now.minute:02}:{now.second:02}")
-            show_pos(symbols_str, schwab_auth)
-            time.sleep(30)
-        except KeyboardInterrupt:
-            break
+def _do_breakout(parts: list[str], schwab_auth: SchwabAuth):
+    try:
+        symbol = parts[1]
+        numshares = int(parts[2])
+        low_target = float(parts[3])
+        high_target = float(parts[4])
+        enter_position(schwab_auth, symbol, numshares, low_target, high_target, breakout=True)
+    except Exception as e:
+        print(e)
+
+def _do_oscillate(parts: list[str], schwab_auth: SchwabAuth):
+    try:
+        symbol = parts[1]
+        numshares = int(parts[2])
+        low_target = float(parts[3])
+        high_target = float(parts[4])
+        enter_position(schwab_auth, symbol, numshares, low_target, high_target, breakout=False)
+    except Exception as e:
+        print(e)
 
 def _do_trans(parts: list[str], schwab_auth: SchwabAuth):
     """"
@@ -301,28 +299,6 @@ def _do_trans(parts: list[str], schwab_auth: SchwabAuth):
     print(f"Total profit: {locale.currency(total_profit, grouping=True)}")
 
 #####
-
-def _do_buylow(parts: list[str], schwab_auth: SchwabAuth):
-    symbol = parts[1]
-    numshares = int(parts[2])
-    change_or_percent_change: str = parts[3]  # good default is "0.025%"
-    extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
-    limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
-    try:
-        _buylow_sellhigh(schwab_auth, True, symbol, numshares, change_or_percent_change, extreme, limit)
-    except Exception as e:
-        print(e)
-
-def _do_sellhigh(parts: list[str], schwab_auth: SchwabAuth):
-    symbol = parts[1]
-    numshares = int(parts[2])
-    change_or_percent_change: str = parts[3]  # good default is "0.025%"
-    extreme = float(parts[4]) if len(parts) > 4 else NO_EXTREME
-    limit = float(parts[5]) if len(parts) > 5 else NO_LIMIT
-    try:
-        _buylow_sellhigh(schwab_auth, False, symbol, numshares, change_or_percent_change, extreme, limit)
-    except Exception as e:
-        print(e)
 
 def _buylow_sellhigh(schwab_auth, islow: bool, symbol: str, numshares: int, change_or_percent_change: str,
                     known_extreme: float, limit: float) -> None:
@@ -628,8 +604,21 @@ def _do_flatten(parts: list[str], schwab_auth: SchwabAuth):
         if not resp.ok:
             print(f"Error disposing of {symbol}: {quantity} shares: instruction is {instruction}")
 
+def _do_code(parts: list[str], schwab_auth: SchwabAuth):
+    filename: str = ' '.join(parts[1:]).strip()
+    try:
+        with open(filename, 'rt') as f:
+            code_str: str = f.read()
+            print(f"Executing code: {code_str}")
+            exec(code_str, globals(), {})
+    except FileNotFoundError:
+        print(f"Error: The file '{filename}' was not found.")
+    except IOError:
+        print(f"Error: There was an issue reading the file '{filename}'.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
-def _do_flattened_port(parts: list[str], schwab_auth: SchwabAuth):
+def _do_reference_port(parts: list[str], schwab_auth: SchwabAuth):
     portfolio = {
         "TJX": 1,
         "RDDT": 10,

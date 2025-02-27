@@ -5,22 +5,24 @@ from datetime import (datetime)
 
 import dotenv
 
-from commands import (get_command_prompts, exec_command)
+from commands import (show_help, get_command_prompts, get_command_prompt, exec_command)
 from schwab_auth import (SchwabAuth)
 
 
 # Status:  Production
 
 
-def process_line(line: str, schwab_auth: SchwabAuth):
+def process_line(line: str, schwab_auth: SchwabAuth) -> str|None:
+    """Returns None if line does not contain a single command (valid or not), else returns the name of the command"""
     line = line.strip()
     parts = line.split(' ')
     if len(parts) < 1:
-        return
+        return None
 
     # Try executing as an advanced command first
     cmd = parts[0]
     exec_command(cmd, parts, schwab_auth)
+    return cmd
 
 
 def repl(initial_line, schwab_auth: SchwabAuth):
@@ -33,12 +35,21 @@ def repl(initial_line, schwab_auth: SchwabAuth):
     for advanced_prompt in get_command_prompts():
         usage_prompt += f"{advanced_prompt}\n"
     while True:
+        prompt = None
         print()
-        line = input("Enter a command (leave blank for usage) then press Return> ")
-        if line:
-            process_line(line, schwab_auth)
+        line = input("Enter a command (leave blank for help) then press Return> ")
+        if not line:
+            show_help()
         else:
-            print(usage_prompt)
+            cmd = process_line(line, schwab_auth)
+            '''
+            if cmd:
+                cmd_prompt = get_command_prompt(cmd)
+                if cmd_prompt:
+                    prompt = cmd_prompt
+            '''
+            if prompt:
+                print(prompt)
 
 
 def main(schwab_auth: SchwabAuth):
