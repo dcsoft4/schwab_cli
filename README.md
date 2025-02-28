@@ -54,23 +54,33 @@ order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bi
 `ss` is "sell stop" <br>
 `ts` is "trailing stop"
 
-#### Position
+#### Account balance and Position
 
-pos [symbol1,symbol2,...]<br>
-posloop [symbol1,symbol2,...] <-- repeats every 30 seconds
+bal \<repeat delay><br>
 
-> To see current position on Reddit, type<br>
-> \> pos rddt<br>
-RDDT: 30 @ 176.566666666667 (201.09); gain/loss: 735.70
+> To see account balance every 10 seconds, type<br>
+> \> bal 10<br>
+5:47:03 PM: \$3,471.31<br>
+5:47:13 PM: \$3,471.38<br>
+5:47:23 PM: \$3,471.78<br>
+
+pos \<symbol1,symbol2,...>\<repeat delay><br>
+
+> To see current position on Reddit and Nvidia, type<br>
+> \> pos rddt,nvda<br>
+RDDT: 30 @ 176.566666666667 (201.09); gain/loss: 735.70<br>
+NVDA: 1 @ 129.5 (121.15); gain/loss: -8.35<br>
+\----<br>
+Total gain/loss: 727.35
 
 #### Trend
 
 trend [symbol] <ref price>
 
 > To get a quote for Nvidia every 30 seconds and compare it to a reference price in units of 0.01%<br>
-> \> trend nvda 131.58<br>
+> \> trend nvda 131.588<br>
 11:04:07: Computing trend for NVDA; ref price: 131.588; updates every 30 seconds; press ^C to stop<br>
-11:04:07: NVDA: 129.69 (-146.35); Summary: -146.35 <-- Price changed (129.69 - 131.588) * 10K<br> 
+11:04:07: NVDA: 129.69 (-146.35); Summary: -146.35 <-- Price changed (129.69 - 131.588) / 129.69 * 10K<br> 
 11:04:37: NVDA: 129.5402 (-11.56); Summary: -157.91<br>
 11:05:07: NVDA: 129.4698 (-5.44); Summary: -163.35<br>
 
