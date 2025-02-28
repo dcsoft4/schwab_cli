@@ -2,7 +2,7 @@
 
 ## What it is
 
-Here are several Python scripts to provide CLI access to your Schwab (formerly TD Ameritrade) brokerage account.  The necessary Schwab token management is broken out into re-usable modules you can use in other software.
+Here are Python scripts to provide CLI access to your Schwab (formerly TD Ameritrade) brokerage account.  The necessary Schwab token management is broken out into re-usable modules you can use in other software.
 
 ## Command-line access to your Schwab account
 
@@ -84,15 +84,33 @@ trend [symbol] <ref price>
 11:04:37: NVDA: 129.5402 (-11.56); Summary: -157.91<br>
 11:05:07: NVDA: 129.4698 (-5.44); Summary: -163.35<br>
 
+#### Transactions
 
-#### Advanced functions
+trans [symbol1,symbol2] <ref price>
+
+> To see today's RDDT transactions<br>
+> \> trans rddt<br>
+> RDDT:  Thu 02/27/25 - Thu 02/27/25
+> 
+> RDDT<br>
+  &nbsp;&nbsp;Group 1<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;Thu 07:14:52 (2/27) RDDT: OPENING: 10.0 shares @ 161.56 [2761599816]<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;Thu 08:39:23 (2/27) RDDT: OPENING: 10.0 shares @ 164.22 [2761599816]<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;Thu 11:00:45 (2/27) RDDT: CLOSING: -20.0 shares @ 162.8301 [2761599816]<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;Group profit:  (\$1.20)<br>
+  &nbsp;&nbsp;RDDT profit: \$1.20)<br>
+ Total profit: (\$1.20)<br>
+
+
+#### Other functions
 
 TODO
 
 #### Support Modules
 [_commands.py_]<br>
 [_orders.py_]<br>
-[_transactions.py_]
+[_transactions.py_]<br>
+[_schwab_api.py_]
 
 
 
