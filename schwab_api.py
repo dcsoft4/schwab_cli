@@ -41,14 +41,6 @@ def get_account_balance(schwab_auth: SchwabAuth):
     return account_balance
 
 
-def monitor_balance(schwab_auth: SchwabAuth):
-    while True:
-        account_balance: float = get_account_balance(schwab_auth)
-        now = datetime.now()
-        print(f'{now.strftime("%X")}: ${account_balance:,}')
-        time.sleep(30)
-
-
 def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshares: int,
                 limit_or_offset_or_bid_or_ask: float | str | None = None) -> requests.Response:
     """

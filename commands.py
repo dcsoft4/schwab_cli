@@ -7,8 +7,7 @@ from datetime import (datetime, timedelta)
 import requests
 from tzlocal import (get_localzone)
 
-from schwab_api import (get_account_balance, monitor_balance, place_order, get_quotes, get_account_positions,
-                        get_transactions)
+from schwab_api import (get_account_balance, place_order, get_quotes, get_account_positions, get_transactions)
 from schwab_auth import (SchwabAuth)
 from transactions import (find_transaction_groups, dump_transaction_groups)
 
@@ -33,21 +32,15 @@ _advanced_commands = [
     },
     {
         "name": "bal",
-        "prompt": "bal [mon]",
-        "help": "Show account balance",
+        "prompt": "bal <repeat delay>",
+        "help": "Show account balance, optionally repeating",
         "function": lambda parts, schwab_auth: _do_bal(parts, schwab_auth),
     },
     {
         "name": "pos",
-        "prompt": "pos [symbol1,symbol2,...]",
-        "help": "Show positions for symbols",
+        "prompt": "pos <symbol1,symbol2,...> <repeat delay>",
+        "help": "Show positions for specified symbols (if none, show all holdings), optionally repeating",
         "function": lambda parts, schwab_auth: _do_pos(parts, schwab_auth)
-    },
-    {
-        "name": "posloop",
-        "prompt": "posloop [symbol1,symbol2,...]",
-        "help": "Show positions for symbols in a loop",
-        "function": lambda parts, schwab_auth: _do_posloop(parts, schwab_auth)
     },
     {
         "name": "trend",
@@ -174,28 +167,46 @@ def do_order(parts: list[str], schwab_auth: SchwabAuth):
     return
 
 def _do_bal(parts: list[str], schwab_auth: SchwabAuth):
-    if len(parts) > 1:
-        bal_cmd = parts[1]
-        if bal_cmd == "mon":
-            monitor_balance(schwab_auth)
-        else:
-            print(f"Invalid bal parameter: {bal_cmd}")
-    else:
-        account_balance: float = get_account_balance(schwab_auth)
-        print(f"Account balance: ${account_balance:,}")
-
-def _do_pos(parts: list[str], schwab_auth: SchwabAuth):
-    symbols_str: str = ' '.join(parts[1:]).strip().upper()
-    show_pos(symbols_str, schwab_auth)
-
-def _do_posloop(parts: list[str], schwab_auth: SchwabAuth):
-    symbols_str: str = ' '.join(parts[1:]).strip().upper()
+    seconds: int = int(parts[1]) if len(parts) > 1 else 0
     while True:
         try:
+            account_balance: float = get_account_balance(schwab_auth)
+            if not seconds:
+                print(f"Account balance: ${account_balance:,}")
+                break
             now = datetime.now()
-            print(f"{now.hour:02}:{now.minute:02}:{now.second:02}")
+            print(f'{now.strftime("%X")}: ${account_balance:,}')
+            time.sleep(seconds)
+        except KeyboardInterrupt:
+            break
+
+def _do_pos(parts: list[str], schwab_auth: SchwabAuth):
+    """
+    Args:
+        <symbol1,symbol2,...>: List of symbols to show positions for, or empty string to show all positions
+        <refresh_interval>: Number of seconds between refresh of positions, or 0 to show only once
+
+        if first part is an int, it is the refresh_interval, else
+        it is the symbol list and second part, if present, is the refresh interval
+    """
+    seconds: int = 0
+    symbols_str: str = ""
+    if len(parts) > 1:
+        if parts[1].isdigit():
+            seconds = int(parts[1])
+        else:
+            symbols_str: str = parts[1].strip().upper()
+            if len(parts) > 2:
+                seconds = int(parts[2])
+    while True:
+        try:
+            if seconds:
+                now = datetime.now()
+                print(f"{now.hour:02}:{now.minute:02}:{now.second:02}")
             show_pos(symbols_str, schwab_auth)
-            time.sleep(30)
+            if not seconds:
+                break
+            time.sleep(seconds)
         except KeyboardInterrupt:
             break
 
@@ -538,6 +549,16 @@ def enter_position(schwab_auth, symbol: str, numshares: int, low_target: float, 
         time.sleep(1)
 
 def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
+    resp: requests.Response = get_account_positions(schwab_auth)
+    if not resp.ok:
+        print(f"Error getting positions")
+        return
+    account_positions = json.loads(resp.text)
+    positions: list = account_positions[0]["securitiesAccount"]["positions"]
+
+    if not symbols_str:  # fill with all account positions
+        symbols_str = ','.join([p["instrument"]["symbol"] for p in positions])
+
     quotes: dict = {}
     if symbols_str:
         quotes = get_quotes(symbols_str, schwab_auth)
@@ -545,13 +566,6 @@ def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
             print("Error getting quotes")
             return
 
-    resp: requests.Response = get_account_positions(schwab_auth)
-    if not resp.ok:
-        print(f"Error getting positions")
-        return
-
-    account_positions = json.loads(resp.text)
-    positions: list = account_positions[0]["securitiesAccount"]["positions"]
     total_gain_loss: float = 0.0
     symbols: list[str] = symbols_str.split(',') if symbols_str else []
     printed: bool = False
@@ -569,6 +583,7 @@ def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
                     gain_loss = float(quantity * (last_price - average_price))
                     total_gain_loss += gain_loss
                     print(f"{symbol}: {quantity} @ {average_price} ({last_price}); gain/loss: {gain_loss:.2f}")
+                    printed = True
                 else:
                     print(f"{symbol}:  Unable to retrieve quote (is symbol misspelled?)")
                     printed = True
@@ -576,7 +591,7 @@ def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
             # Show position only
             print(f"{symbol}: {quantity} @ {average_price}")
             printed = True
-    if abs(total_gain_loss) > 0.0:
+    if len(symbols) > 1 and abs(total_gain_loss) > 0.0:
         print("----")
         print(f"Total gain/loss: {total_gain_loss:,.2f}")
         print()
