@@ -90,8 +90,8 @@ _advanced_commands = [
     },
     {
         "name": "refport",
-        "prompt": "refport <-- EXPERIMENTAL",
-        "help": "Show current value of a (previously hard-coded) reference portfolio.",
+        "prompt": "refport <repeat delay> <-- EXPERIMENTAL",
+        "help": "Show current value of a (previously hard-coded) reference portfolio, optionally repeating",
         "function": lambda parts, schwab_auth: _do_reference_port(parts, schwab_auth),
     },
     {
@@ -634,17 +634,15 @@ def _do_code(parts: list[str], schwab_auth: SchwabAuth):
         print(f"An unexpected error occurred: {e}")
 
 def _do_reference_port(parts: list[str], schwab_auth: SchwabAuth):
-    portfolio = {
-        "TJX": 1,
-        "RDDT": 10,
-        "NVDA": 5,
-        "IBIT": 10,
-        "NFLX": 2,
-        "AAPL": 10,
-        "TTD": 15,
+    flattened_portfolio = {
+        "ANET": (5, 91.85),
+        "RDDT": (10, 160.20),
+        "NVDA": (2, 121.80),
+        "IBIT": (10, 47.56),
     }
 
-    flattened_portfolio = {
+    '''
+    flattened_portfolio_full = {
         "TJX": (1, 124.14),
         "RDDT": (10, 200.172),
         "NVDA": (5, 138.44),
@@ -653,22 +651,35 @@ def _do_reference_port(parts: list[str], schwab_auth: SchwabAuth):
         "AAPL": (10, 244.15),
         "TTD": (15, 80.76),
     }
+    '''
 
-
-    symbols = ",".join(portfolio.keys())
-    quotes = get_quotes(symbols, schwab_auth)
-    if not quotes:
-        print("Error getting quotes")
-        return
-    total_net = 0.0
-    total_flattened_net = 0.0
-    for symbol, quantity in portfolio.items():
-        price = quotes[symbol]["quote"]["lastPrice"]
-        flattened_price = flattened_portfolio[symbol][1]
-        net = quantity * price
-        flattened_net = quantity * flattened_price
-        total_net += net
-        total_flattened_net += flattened_net
-        print(f"{symbol}: {quantity} @ {flattened_price:,.2f} (Current: {price:,.2f}) = {(flattened_net - net):,.2f}")
-    print("----")
-    print(f"Net value of equities: {total_flattened_net:,.2f} (Current: {total_net:,.2f}) = {(total_flattened_net - total_net):,.2f}")
+    symbols = ",".join(flattened_portfolio.keys())
+    seconds: int = int(parts[1]) if len(parts) > 1 else 0
+    while True:
+        try:
+            quotes = get_quotes(symbols, schwab_auth)
+            if not quotes:
+                print("Error getting quotes")
+                return
+            total_net = 0.0
+            total_flattened_net = 0.0
+            if seconds:
+                now = datetime.now()
+                print(f"{now.hour:02}:{now.minute:02}:{now.second:02}")
+            for symbol, value in flattened_portfolio.items():
+                price = quotes[symbol]["quote"]["lastPrice"]
+                quantity = value[0]
+                flattened_price = value[1]
+                net = quantity * price
+                flattened_net = quantity * flattened_price
+                total_net += net
+                total_flattened_net += flattened_net
+                print(f"{symbol}: {quantity} @ {flattened_price:,.2f} (Current: {price:,.2f}) = {(flattened_net - net):,.2f}")
+            print("----")
+            print(f"Net value of equities: {total_flattened_net:,.2f} (Current: {total_net:,.2f}) = {(total_flattened_net - total_net):,.2f}")
+            print()
+            if not seconds:
+                break
+            time.sleep(seconds)
+        except KeyboardInterrupt:
+            break
