@@ -49,7 +49,8 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
         's' or 'sell' - sell
         'bs' - buy stop
         'ss' - sell stop
-        'ts' - trailing stop
+        'bts' - buy trailing stop
+        'sts' - sell trailing stop
 
     limit_or_offset_or_bid_or_ask is:
         a float -- the limit price, unless instruction is 'ts', then it is the offset,
@@ -71,7 +72,7 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
     else:
         limit_or_offset = None
 
-    order_type = "TRAILING_STOP" if instruction == "ts" else \
+    order_type = "TRAILING_STOP" if instruction == "bts" or instruction == 'sts' else \
         "STOP" if instruction == 'ss' or instruction == 'bs' else \
             "LIMIT" if limit_or_offset else "MARKET"
     is_trailing_stop = order_type == "TRAILING_STOP"
@@ -79,9 +80,9 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
 
     # Just use B or S and the server will automatically know if it is short-related
     instruction = instruction.lower()
-    if instruction == 'b' or instruction == 'buy' or instruction == 'bs':
+    if instruction == 'b' or instruction == 'buy' or instruction == 'bs' or instruction == 'bts':
         instruction = "BUY"
-    elif instruction == 's' or instruction == 'sell' or instruction == 'ss' or instruction == 'ts':
+    elif instruction == 's' or instruction == 'sell' or instruction == 'ss' or instruction == 'sts':
         instruction = "SELL"
     else:
         assert False, f'Illegal instruction: {instruction}'

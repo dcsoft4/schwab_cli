@@ -26,7 +26,7 @@ _advanced_commands = [
     },
     {
         "name": "order",
-        "prompt": "order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset (for 'ts') | 'ask' | 'bid'>",
+        "prompt": "order [b | s | bs | ss | bts | sts] [symbol] [num shares] <limit | offset (for 'bts' and 'sts') | 'ask' | 'bid'>",
         "help": "Place an order to buy/sell/buy stop/sell stop/trailing stop",
         "function": lambda parts, schwab_auth: do_order(parts, schwab_auth),
     },
@@ -152,12 +152,12 @@ def _do_quote(parts: list[str], schwab_auth: SchwabAuth):
 
 def do_order(parts: list[str], schwab_auth: SchwabAuth):
     if len(parts) < 1:
-        print(f"Error:  Invalid order --- order start with one of: 'b' (buy), 's' (sell), 'bs' (buy stop), 'ss' (sell stop), 'ts' (trail stop))")
+        print(f"Error:  Invalid order --- order start with one of: 'b' (buy), 's' (sell), 'bs' (buy stop), 'ss' (sell stop), 'bts' (buy trail stop), 'sts' (sell trail stop)")
         return
 
     instruction = parts[1]
-    if instruction not in ('b', 's', 'bs', 'ss', 'ts'):
-        print(f"Error:  Invalid order --- instruction must be one of 'b', 's', 'bs', 'ss', 'ts'")
+    if instruction not in ('b', 's', 'bs', 'ss', 'bts', 'sts'):
+        print(f"Error:  Invalid order --- instruction must be one of 'b', 's', 'bs', 'ss', 'bts', 'sts':  {instruction}")
         return
 
     if len(parts) < 3:
