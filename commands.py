@@ -95,6 +95,12 @@ _advanced_commands = [
         "function": lambda parts, schwab_auth: _do_reference_port(parts, schwab_auth),
     },
     {
+        "name": "buyport",
+        "prompt": "buyport [portfolio filename]",
+        "help": "Buy the positions contained in the specified portfolio",
+        "function": lambda parts, schwab_auth: _do_buyport(parts, schwab_auth),
+    },
+    {
         "name": "q",
         "prompt": "q (quit)",
         "help": "Quit the program",
@@ -634,26 +640,24 @@ def _do_code(parts: list[str], schwab_auth: SchwabAuth):
         print(f"An unexpected error occurred: {e}")
 
 def _do_reference_port(parts: list[str], schwab_auth: SchwabAuth):
-    flattened_portfolio = {
-        "ANET": (5, 91.85),
-        "RDDT": (10, 160.20),
-        "NVDA": (2, 121.80),
-        "IBIT": (10, 47.56),
+    portfolio = {
+        "IBIT": (10, 49.57),
+        "RDDT": (1, 132.94),
+        "UPRO": (10, 77.59),
+        "NVDA": (-5, 109.00),
     }
 
+
     '''
-    flattened_portfolio_full = {
-        "TJX": (1, 124.14),
-        "RDDT": (10, 200.172),
-        "NVDA": (5, 138.44),
-        "IBIT": (10, 55.74),
-        "NFLX": (2, 1059.065),
-        "AAPL": (10, 244.15),
-        "TTD": (15, 80.76),
+    portfolio_full = {
+        IBIT: 10 @ 51.0 (49.65); gain/loss: -13.50
+        RDDT: 1 @ 147.7039 (132.955); gain/loss: -14.75
+        UPRO: 10 @ 80.6896 (77.91); gain/loss: -27.80
+        AWSAX: 0 @ 0.0 (15.65); gain/loss: 0.00
     }
     '''
 
-    symbols = ",".join(flattened_portfolio.keys())
+    symbols = ",".join(portfolio.keys())
     seconds: int = int(parts[1]) if len(parts) > 1 else 0
     while True:
         try:
@@ -666,7 +670,7 @@ def _do_reference_port(parts: list[str], schwab_auth: SchwabAuth):
             if seconds:
                 now = datetime.now()
                 print(f"{now.hour:02}:{now.minute:02}:{now.second:02}")
-            for symbol, value in flattened_portfolio.items():
+            for symbol, value in portfolio.items():
                 price = quotes[symbol]["quote"]["lastPrice"]
                 quantity = value[0]
                 flattened_price = value[1]
@@ -683,3 +687,18 @@ def _do_reference_port(parts: list[str], schwab_auth: SchwabAuth):
             time.sleep(seconds)
         except KeyboardInterrupt:
             break
+
+
+def _do_buyport(parts: list[str], schwab_auth: SchwabAuth):
+    if len(parts) < 2:
+        print("Error: portfolio filename is missing")
+        return
+    filename: str = parts[1]
+    try:
+        with open(filename, 'rt') as f:
+            portfolio: dict = json.load(f)
+            for symbol, value in portfolio.items():
+                quantity = value[0]
+                do_order(["order", "b" if quantity > 0 else "s", symbol, str(quantity)])
+    except FileNotFoundError:
+        print(f"Error: The file '{filename}' was not found.")
