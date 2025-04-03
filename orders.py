@@ -24,12 +24,16 @@ class WorkingOrder:
     symbol: str
     instruction: str
     shares: float
+    price: float
+    orderType: str
     order_id: str
 
-    def __init__(self, symbol: str, instruction: str, shares: float, order_id: str):
+    def __init__(self, symbol: str, instruction: str, shares: float, price: float, orderType: str,  order_id: str):
         self.symbol = symbol
         self.shares = shares
         self.instruction = instruction
+        self.price = price
+        self.orderType = orderType
         self.order_id = order_id
 
 
@@ -73,22 +77,24 @@ def get_filled_order_info(order) -> (int, float):
     return (shares, price)
 
 
-def find_working_orders(orders: list, target_symbol: str) -> list[WorkingOrder]:
+def find_working_orders(orders: list, target_symbol: str|None = None) -> list[WorkingOrder]:
     """ Return orders with WORKING status from `orders` """
     working_orders: list[WorkingOrder] = []
     for order in orders:
         status: str = order["status"]
         if status == "WORKING" or status == "PENDING_ACTIVATION":  # TODO:  Handle all possible order states!!!!
             symbol: str = get_order_symbol(order)
-            if symbol == target_symbol:
+            if not target_symbol or symbol == target_symbol:
                 order_id: str = order["orderId"]
-                if order.get("orderStrategyType") == "OCO":
+                if order.get("orderStrategyType") == "OCO":        # TODO: process both parts of OCO order
                     order = order["childOrderStrategies"][0]
                 legs = order["orderLegCollection"]
                 for leg in legs:
                     instruction: str = leg["instruction"]   # e.g. "SELL"
                     shares: float = leg["quantity"]
-                    working_orders.append(WorkingOrder(symbol, instruction, shares, order_id))
+                    price: float = order["price"]
+                    orderType: str = order["orderType"]
+                    working_orders.append(WorkingOrder(symbol, instruction, shares, price, orderType, order_id))
         elif status == "FILLED":
             pass
             '''

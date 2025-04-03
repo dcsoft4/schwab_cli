@@ -190,3 +190,12 @@ def delete_working_orders(schwab_auth: SchwabAuth, symbol: str):
         resp: requests.Response = delete_order(schwab_auth, order.order_id)
         print(
             f"Deleting working order {order.order_id}:  {order.instruction} {order.symbol} {order.shares}... {"OK" if resp.ok else resp.text}")
+
+def show_working_orders(schwab_auth: SchwabAuth):
+    """ Show working orders that were placed within the past year.  This can be slow. """
+    end_date: datetime = datetime.now(get_localzone())
+    start_date = end_date - timedelta(days=365)
+    working_orders: list[WorkingOrder] = find_working_orders(get_orders(schwab_auth, start_date, end_date))
+    print("Working orders:")
+    for order in working_orders:
+        print(f"  {order.order_id}:  {order.instruction} {order.symbol} {order.shares} @{order.price} {order.orderType}")

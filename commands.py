@@ -7,7 +7,8 @@ from datetime import (datetime, timedelta)
 import requests
 from tzlocal import (get_localzone)
 
-from schwab_api import (get_account_balance, place_order, get_quotes, get_account_positions, get_transactions)
+from schwab_api import (get_account_balance, place_order, get_quotes, get_account_positions, get_transactions,
+                        show_working_orders)
 from schwab_auth import (SchwabAuth)
 from transactions import (find_transaction_groups, dump_transaction_groups)
 
@@ -26,8 +27,8 @@ _advanced_commands = [
     },
     {
         "name": "order",
-        "prompt": "order [b | s | bs | ss | bts | sts] [symbol] [num shares] <limit | offset (for 'bts' and 'sts') | 'ask' | 'bid'>",
-        "help": "Place an order to buy/sell/buy stop/sell stop/trailing stop",
+        "prompt": "order [ [b | s | bs | ss | bts | sts] [symbol] [num shares] <limit | offset (for 'bts' and 'sts') | 'ask' | 'bid'> ]",
+        "help": "Show working orders, or Place an order to buy/sell/buy stop/sell stop/trailing stop",
         "function": lambda parts, schwab_auth: do_order(parts, schwab_auth),
     },
     {
@@ -151,8 +152,8 @@ def _do_quote(parts: list[str], schwab_auth: SchwabAuth):
             print(*prices, sep='\n')
 
 def do_order(parts: list[str], schwab_auth: SchwabAuth):
-    if len(parts) < 1:
-        print(f"Error:  Invalid order --- order start with one of: 'b' (buy), 's' (sell), 'bs' (buy stop), 'ss' (sell stop), 'bts' (buy trail stop), 'sts' (sell trail stop)")
+    if len(parts) == 1:
+        show_working_orders(schwab_auth)
         return
 
     instruction = parts[1]

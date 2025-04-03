@@ -34,8 +34,11 @@ quote [symbol1,symbol2,...]
 
 #### Order
 
-order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bid'>
+order [ [b | s | bs | ss | bts | sts] [symbol] [num shares] <limit | offset (for 'bts' and 'sts') | 'ask' | 'bid'> ]
 
+> To view all working orders
+> \> order
+> 
 > To buy 100 shares of Apple at the market price: <br>
 > \> order b aapl 100 <br>
 > <br>
@@ -52,7 +55,8 @@ order [b | s | bs | ss | ts] [symbol] [num shares] <limit | offset | 'ask' | 'bi
 `s` is "sell" <br>
 `bs` is "buy stop" <br>
 `ss` is "sell stop" <br>
-`ts` is "trailing stop"
+`bts` is "buy trailing stop"
+`sts` is "sell trailing stop"
 
 #### Account balance and Position
 
