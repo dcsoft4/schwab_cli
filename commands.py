@@ -575,14 +575,15 @@ def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
 
     total_gain_loss: float = 0.0
     symbols: list[str] = symbols_str.split(',') if symbols_str else []
-    printed: bool = False
+    num_printed: int = 0
+
     for p in positions:
         symbol = p["instrument"]["symbol"]
         quantity: int = int(p["longQuantity"]) - int(p["shortQuantity"])
         average_price: float = float(p["averageLongPrice"]) if "averageLongPrice" in p else float(
             p["averageShortPrice"])
         if symbols:  # specific stocks specified
-            if symbol in symbols:
+            if symbol in symbols and quantity != 0:
                 # Try to show quote for specified stock
                 quote = quotes.get(symbol)
                 if quote:
@@ -590,19 +591,19 @@ def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
                     gain_loss = float(quantity * (last_price - average_price))
                     total_gain_loss += gain_loss
                     print(f"{symbol}: {quantity} @ {average_price} ({last_price}); gain/loss: {gain_loss:.2f}")
-                    printed = True
+                    num_printed += 1
                 else:
                     print(f"{symbol}:  Unable to retrieve quote (is symbol misspelled?)")
-                    printed = True
+                    num_printed += 1
         else:  # no specific stocks specified ==> show all stocks which have positions
             # Show position only
             print(f"{symbol}: {quantity} @ {average_price}")
-            printed = True
-    if len(symbols) > 1 and abs(total_gain_loss) > 0.0:
+            num_printed += 1
+    if num_printed > 1 and abs(total_gain_loss) > 0.0:
         print("----")
         print(f"Total gain/loss: {total_gain_loss:,.2f}")
         print()
-    elif not printed:
+    elif num_printed == 0:
         print(f"No open positions")
         print()
 
