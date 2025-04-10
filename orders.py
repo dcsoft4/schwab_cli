@@ -92,7 +92,7 @@ def find_working_orders(orders: list, target_symbol: str|None = None) -> list[Wo
                 for leg in legs:
                     instruction: str = leg["instruction"]   # e.g. "SELL"
                     shares: float = leg["quantity"]
-                    price: float = order["price"]
+                    price: float = order.get("price", 0.0)
                     orderType: str = order["orderType"]
                     working_orders.append(WorkingOrder(symbol, instruction, shares, price, orderType, order_id))
         elif status == "FILLED":
