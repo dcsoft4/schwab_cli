@@ -2,3 +2,5 @@
 /auth.json
 /requirements.lock
 /requirements-dev.lock
+/__pycache__/
+/.idea/

@@ -27,7 +27,7 @@ def process_line(line: str, schwab_auth: SchwabAuth) -> str|None:
 
 def repl(initial_line, schwab_auth: SchwabAuth):
     refresh_token_expiration: datetime = schwab_auth.refresh_token_expected_expiration_time()
-    print(f"Refresh token expected expiration:  {refresh_token_expiration}; in {(refresh_token_expiration - datetime.now()).days} days.")
+    print(f"Refresh token expected expiration:  {refresh_token_expiration}; in {(refresh_token_expiration - datetime.now()).days:.1f} days.")
     if initial_line:
         process_line(initial_line, schwab_auth)
 
@@ -52,13 +52,7 @@ def repl(initial_line, schwab_auth: SchwabAuth):
                 print(prompt)
 
 
-def main(schwab_auth: SchwabAuth):
-    args = sys.argv[1:]  # all but program name
-    initial_line = " ".join(args) if len(args) > 0 else None
-    repl(initial_line, schwab_auth)
-
-
-if __name__ == "__main__":
+def InitSchwabAuth() -> SchwabAuth|None:
     # Set the locale for currency formatting
     locale.setlocale(locale.LC_ALL, "en_US")
 
@@ -73,6 +67,18 @@ if __name__ == "__main__":
     if not app_key or not app_secret:
         print("FATAL ERROR:  One or more environment variables are missing, e.g. SCHWAB_APP_KEY, SCHWAB_APP_SECRET.")
         print("Please check your .env file (follow the pattern in .env.example) and try again.  Exiting.")
-    else:
-        schwab_auth = SchwabAuth(app_key, app_secret)
+        return None
+
+    return SchwabAuth(app_key, app_secret)
+
+
+def main(schwab_auth: SchwabAuth):
+    args = sys.argv[1:]  # all but program name
+    initial_line = " ".join(args) if len(args) > 0 else None
+    repl(initial_line, schwab_auth)
+
+
+if __name__ == "__main__":
+    schwab_auth = InitSchwabAuth()
+    if schwab_auth:
         main(schwab_auth)
