@@ -9,13 +9,11 @@ from tzlocal import (get_localzone)
 from orders import (find_working_orders, WorkingOrder)
 from schwab_auth import (SchwabAuth)
 
-
 TRADER_API_ROOT = "https://api.schwabapi.com/trader/v1"
 MARKETDATA_API_ROOT = "https://api.schwabapi.com/marketdata/v1"
 
-
-
 _my_account_number: str | None = None  # Access with get_my_account_number()
+
 
 def get_my_account_number(schwab_auth: SchwabAuth) -> str:
     global _my_account_number
@@ -87,9 +85,24 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
     else:
         assert False, f'Illegal instruction: {instruction}'
 
+
+# Determine the trading session based on current Pacific Time
+now_pacific = datetime.now(ZoneInfo("America/Los_Angeles"))
+if now_pacific.time() >= datetime.strptime("06:30", "%H:%M").time() and now_pacific.time() <= datetime.strptime("13:30",
+                                                                                                                "%H:%M").time():
+    session: str = "NORMAL"
+elif now_pacific.time() >= datetime.strptime("04:00", "%H:%M").time() and now_pacific.time() <= datetime.strptime(
+        "06:25", "%H:%M").time():
+    session: str = "AM"
+elif now_pacific.time() >= datetime.strptime("13:05", "%H:%M").time() and now_pacific.time() <= datetime.strptime(
+        "17:00", "%H:%M").time():
+    session: str = "PM"
+else:
+    session: str = "EXTO"
+
     data = {
         "orderType": order_type,
-        "session": "NORMAL",
+        "session": session,
         "duration": "DAY",
         "orderStrategyType": "SINGLE",
         "orderLegCollection": [
@@ -149,8 +162,10 @@ def get_account_positions(schwab_auth: SchwabAuth) -> requests.Response:
 def get_transactions(schwab_auth: SchwabAuth, symbol: str, start_date: datetime, end_date: datetime) -> list | None:
     """Return JSON string of transactions"""
     params = {
-        'startDate': start_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'), # e.g. '2024-10-03T00:00:00.000Z'
-        'endDate': end_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'),     # e.g. '2024-10-03T00:23:59.000Z'
+        'startDate': start_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        # e.g. '2024-10-03T00:00:00.000Z'
+        'endDate': end_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        # e.g. '2024-10-03T00:23:59.000Z'
         'symbol': symbol,
         'types': 'TRADE'
     }
@@ -167,8 +182,10 @@ def get_orders(schwab_auth: SchwabAuth, start_date: datetime = None, end_date: d
     start_date = start_date if start_date else datetime.now(get_localzone()).replace(hour=0, minute=0, second=0)
     end_date = end_date if end_date else datetime.now(get_localzone()).replace(hour=23, minute=59, second=59)
     params = {
-        'fromEnteredTime': start_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'), # e.g. '2024-10-03T00:00:00.000Z'
-        'toEnteredTime': end_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'),     # e.g. '2024-10-03T00:23:59.000Z'
+        'fromEnteredTime': start_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        # e.g. '2024-10-03T00:00:00.000Z'
+        'toEnteredTime': end_date.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        # e.g. '2024-10-03T00:23:59.000Z'
     }
 
     resp = requests.get(f"{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/orders", params=params,
@@ -178,7 +195,8 @@ def get_orders(schwab_auth: SchwabAuth, start_date: datetime = None, end_date: d
 
 
 def delete_order(schwab_auth: SchwabAuth, order_id: str) -> requests.Response:
-    return requests.delete(f"{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/orders/{order_id}", headers=schwab_auth.headers())
+    return requests.delete(f"{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/orders/{order_id}",
+                           headers=schwab_auth.headers())
 
 
 def delete_working_orders(schwab_auth: SchwabAuth, symbol: str):
@@ -191,6 +209,7 @@ def delete_working_orders(schwab_auth: SchwabAuth, symbol: str):
         print(
             f"Deleting working order {order.order_id}:  {order.instruction} {order.symbol} {order.shares}... {"OK" if resp.ok else resp.text}")
 
+
 def show_working_orders(schwab_auth: SchwabAuth):
     """ Show working orders that were placed within the past year.  This can be slow. """
     end_date: datetime = datetime.now(get_localzone())
@@ -198,4 +217,5 @@ def show_working_orders(schwab_auth: SchwabAuth):
     working_orders: list[WorkingOrder] = find_working_orders(get_orders(schwab_auth, start_date, end_date))
     print("Working orders:")
     for order in working_orders:
-        print(f"  {order.order_id}:  {order.instruction} {order.symbol} {order.shares} @{order.price} {order.orderType}")
+        print(
+            f"  {order.order_id}:  {order.instruction} {order.symbol} {order.shares} @{order.price} {order.orderType}")
