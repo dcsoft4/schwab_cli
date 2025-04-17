@@ -86,14 +86,14 @@ def find_working_orders(orders: list, target_symbol: str|None = None) -> list[Wo
             symbol: str = get_order_symbol(order)
             if not target_symbol or symbol == target_symbol:
                 order_id: str = order["orderId"]
+                orderType: str = order["orderType"]
+                price: float = order["stopPrice"] if orderType == 'STOP' else order.get("price", 0.0)
                 if order.get("orderStrategyType") == "OCO":        # TODO: process both parts of OCO order
                     order = order["childOrderStrategies"][0]
                 legs = order["orderLegCollection"]
                 for leg in legs:
                     instruction: str = leg["instruction"]   # e.g. "SELL"
                     shares: float = leg["quantity"]
-                    price: float = order.get("price", 0.0)
-                    orderType: str = order["orderType"]
                     working_orders.append(WorkingOrder(symbol, instruction, shares, price, orderType, order_id))
         elif status == "FILLED":
             pass
