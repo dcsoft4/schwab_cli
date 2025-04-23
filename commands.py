@@ -561,7 +561,10 @@ def show_pos(symbols_str: str, schwab_auth: SchwabAuth):
         print(f"Error getting positions")
         return
     account_positions = json.loads(resp.text)
-    positions: list = account_positions[0]["securitiesAccount"]["positions"]
+    positions: list = account_positions[0]["securitiesAccount"].get("positions")
+    if not positions:
+        print(f"No open positions")
+        return
 
     if not symbols_str:  # fill with all account positions
         symbols_str = ','.join([p["instrument"]["symbol"] for p in positions])
