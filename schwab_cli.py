@@ -27,7 +27,9 @@ def process_line(line: str, schwab_auth: SchwabAuth) -> str|None:
 
 def repl(initial_line, schwab_auth: SchwabAuth):
     refresh_token_expiration: datetime = schwab_auth.refresh_token_expected_expiration_time()
-    print(f"Refresh token expected expiration:  {refresh_token_expiration}; in {(refresh_token_expiration - datetime.now()).days:.1f} days.")
+    delta = refresh_token_expiration - datetime.now()
+    days_until: float = delta.total_seconds() / 3600 / 24  # seconds -> hours -> days
+    print(f"Refresh token expected expiration:  {refresh_token_expiration}; in {days_until:.1f} days.")
     if initial_line:
         process_line(initial_line, schwab_auth)
 
