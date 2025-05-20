@@ -88,27 +88,30 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
 
     duration: str = "DAY"
 
-    # Determine the trading session based on current Pacific Time
-    now_pacific = datetime.now(ZoneInfo("America/Los_Angeles"))
-    time_0400 = datetime.strptime("04:00", "%H:%M").time()
-    time_0625 = datetime.strptime("06:25", "%H:%M").time()
-    time_0630 = datetime.strptime("06:30", "%H:%M").time()
-    time_1305 = datetime.strptime("13:05", "%H:%M").time()
-    time_1330 = datetime.strptime("13:30", "%H:%M").time()
-    time_1700 = datetime.strptime("17:00", "%H:%M").time()
+    # Documented session values from https://developer.schwab.com/products/trader-api... are:  ["NORMAL", "AM", "PM", "SEAMLESS"]
+    session: str = "SEAMLESS"
 
-    if now_pacific.time() >= time_0630 and now_pacific.time() <= time_1330:
-        session: str = "NORMAL"
-    elif now_pacific.time() >= time_0400 and now_pacific.time() <= time_0625:
-        session: str = "AM"
-        duration: str = "GOOD_TILL_CANCEL"
-    elif now_pacific.time() >= time_0625 and now_pacific.time() <= time_0630:
-        session: str = "NORMAL"
-        print("Warning:  Order is queued and executed after market open")
-    elif now_pacific.time() >= time_1305 and now_pacific.time() <= time_1700:
-        session: str = "PM"
-    else:
-        session: str = "EXTO"
+    # Determine the trading session based on current Pacific Time
+    # now_pacific = datetime.now(ZoneInfo("America/Los_Angeles"))
+    # time_0400 = datetime.strptime("04:00", "%H:%M").time()
+    # time_0625 = datetime.strptime("06:25", "%H:%M").time()
+    # time_0630 = datetime.strptime("06:30", "%H:%M").time()
+    # time_1305 = datetime.strptime("13:05", "%H:%M").time()
+    # time_1330 = datetime.strptime("13:30", "%H:%M").time()
+    # time_1700 = datetime.strptime("17:00", "%H:%M").time()
+
+    # if now_pacific.time() >= time_0630 and now_pacific.time() <= time_1330:
+    #     session: str = "NORMAL"
+    # elif now_pacific.time() >= time_0400 and now_pacific.time() <= time_0625:
+    #     session: str = "DAY"  // "AM" had error "REJECTED:  An am./p.m. session order can only be submitted as a day order"
+    #     duration: str = "GOOD_TILL_CANCEL"
+    # elif now_pacific.time() >= time_0625 and now_pacific.time() <= time_0630:
+    #     session: str = "NORMAL"
+    #     print("Warning:  Order is queued and executed after market open")
+    # elif now_pacific.time() >= time_1305 and now_pacific.time() <= time_1700:
+    #     session: str = "DAY"  // "AM" had error "REJECTED:  An am./p.m. session order can only be submitted as a day order"
+    # else:
+    #     session: str = "EXTO"
 
     data = {
         "orderType": order_type,
