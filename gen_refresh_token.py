@@ -70,7 +70,7 @@ def gen_refresh_token(auth_code: str, headers: Mapping, callback_url: str) -> st
         'redirect_uri': callback_url,
     }
 
-    response = requests.post(token_url, headers=headers, data=data)
+    response = requests.post(token_url, headers=headers, data=data, timeout=60)
     if not response.ok:
         return None
     d = json.loads(response.text)

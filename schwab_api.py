@@ -18,7 +18,7 @@ _my_account_number: str | None = None  # Access with get_my_account_number()
 def get_my_account_number(schwab_auth: SchwabAuth) -> str:
     global _my_account_number
     if not _my_account_number:
-        resp = requests.get(f'{TRADER_API_ROOT}/accounts/accountNumbers', headers=schwab_auth.headers())
+        resp = requests.get(f'{TRADER_API_ROOT}/accounts/accountNumbers', headers=schwab_auth.headers(), timeout=60)
         if not resp.ok:
             return resp.text if resp.text else "Something went wrong"
         j = json.loads(resp.text)
@@ -31,7 +31,7 @@ def get_account_balance(schwab_auth: SchwabAuth):
     params = {
         'fields': 'positions',
     }
-    resp = requests.get(f'{TRADER_API_ROOT}/accounts', params=params, headers=schwab_auth.headers())
+    resp = requests.get(f'{TRADER_API_ROOT}/accounts', params=params, headers=schwab_auth.headers(), timeout=60)
     if not resp.ok:
         return resp.text if resp.text else "Something went wrong"
     j = json.loads(resp.text)
@@ -151,7 +151,7 @@ def place_order(schwab_auth: SchwabAuth, instruction: str, symbol: str, numshare
     headers = schwab_auth.headers()
     headers["Content-Type"] = "application/json"  # necessary????
     resp = requests.post(f'{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/orders', data=data,
-                         headers=headers)
+                         headers=headers, timeout=60)
     return resp
 
 
@@ -161,7 +161,7 @@ def get_quotes(symbols: str, schwab_auth: SchwabAuth) -> dict | None:
         'fields': 'quote,reference'
     }
 
-    resp = requests.get(f'{MARKETDATA_API_ROOT}/quotes', params=params, headers=schwab_auth.headers())
+    resp = requests.get(f'{MARKETDATA_API_ROOT}/quotes', params=params, headers=schwab_auth.headers(), timeout=60)
     quotes: dict = json.loads(resp.text) if resp.ok else None
     return quotes
 
@@ -170,7 +170,7 @@ def get_account_positions(schwab_auth: SchwabAuth) -> requests.Response:
     params = {
         'fields': 'positions',
     }
-    resp: requests.Response = requests.get(f'{TRADER_API_ROOT}/accounts', params=params, headers=schwab_auth.headers())
+    resp: requests.Response = requests.get(f'{TRADER_API_ROOT}/accounts', params=params, headers=schwab_auth.headers(), timeout=60)
     return resp
 
 
@@ -186,7 +186,7 @@ def get_transactions(schwab_auth: SchwabAuth, symbol: str, start_date: datetime,
     }
 
     resp = requests.get(f"{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/transactions", params=params,
-                        headers=schwab_auth.headers())
+                        headers=schwab_auth.headers(), timeout=60)
     transactions: list = json.loads(resp.text) if resp.ok else None
     return transactions
 
@@ -204,14 +204,14 @@ def get_orders(schwab_auth: SchwabAuth, start_date: datetime = None, end_date: d
     }
 
     resp = requests.get(f"{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/orders", params=params,
-                        headers=schwab_auth.headers())
+                        headers=schwab_auth.headers(), timeout=60)
     orders: list = json.loads(resp.text) if resp.ok else None
     return orders
 
 
 def delete_order(schwab_auth: SchwabAuth, order_id: str) -> requests.Response:
     return requests.delete(f"{TRADER_API_ROOT}/accounts/{get_my_account_number(schwab_auth)}/orders/{order_id}",
-                           headers=schwab_auth.headers())
+                           headers=schwab_auth.headers(), timeout=60)
 
 
 def delete_working_orders(schwab_auth: SchwabAuth, symbol: str):

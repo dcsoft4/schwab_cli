@@ -67,7 +67,7 @@ class SchwabAuth:
             'grant_type': 'refresh_token',
             'refresh_token': self.auth['refresh_token'],
         }
-        response = requests.post(token_url, headers=headers, data=data)
+        response = requests.post(token_url, headers=headers, data=data, timeout=60)
         if not response.ok:
             message = 'Fatal error:  Try running gen_refresh_token.py to update Refresh token.  Full error:'
             message += response.text
